@@ -1,4 +1,4 @@
-package com.mkl.mybatis;
+package com.mkl.mybatis.mybatisDemo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
