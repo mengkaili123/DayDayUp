@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  */
 //注解不仅被保存到class文件中，jvm加载class文件之后，仍然存在
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD, ElementType.FIELD})
 public @interface Autowired {
 
 }

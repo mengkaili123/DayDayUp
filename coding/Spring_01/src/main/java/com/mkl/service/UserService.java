@@ -1,6 +1,7 @@
 package com.mkl.service;
 
 
+import com.spring.Autowired;
 import com.spring.Component;
 import com.spring.scope;
 
@@ -11,4 +12,12 @@ import com.spring.scope;
 @Component("userService")
 @scope("prototype")
 public class UserService {
+
+    @Autowired
+    private OrderService orderService;
+
+    public void test() {
+        System.out.println(orderService);
+    }
+
 }

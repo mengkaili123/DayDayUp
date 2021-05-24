@@ -2,6 +2,7 @@ package com.spring;
 
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Map;
@@ -40,6 +41,17 @@ public class MiniApplicationContext {
         Class clazz = beanDefinition.getClazz();
         try {
             Object instance = clazz.getDeclaredConstructor().newInstance();
+
+            // 依赖注入
+            for (Field declaredField : clazz.getDeclaredFields()) {
+                // 获取类中的所有属性，并对有Autowired注解的属性进行赋值
+                if (declaredField.isAnnotationPresent(Autowired.class)) {
+                    Object bean = getBean(declaredField.getName());
+                    declaredField.setAccessible(true);
+                    declaredField.set(instance, bean);
+                }
+            }
+
             return instance;
         } catch (InstantiationException e) {
             e.printStackTrace();
