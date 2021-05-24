@@ -1,6 +1,7 @@
 package com.mkl;
 
 
+import com.spring.ComponentScan;
 
 /**
  * @author Mengkaili

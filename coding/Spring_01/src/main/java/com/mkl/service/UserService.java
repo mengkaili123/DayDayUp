@@ -1,6 +1,8 @@
 package com.mkl.service;
 
 
+import com.spring.Component;
+import com.spring.scope;
 
 /**
  * @author Mengkaili
