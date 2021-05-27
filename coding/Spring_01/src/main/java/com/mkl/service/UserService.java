@@ -1,9 +1,7 @@
 package com.mkl.service;
 
 
-import com.spring.Autowired;
-import com.spring.Component;
-import com.spring.scope;
+import com.spring.*;
 
 /**
  * @author Mengkaili
@@ -11,13 +9,24 @@ import com.spring.scope;
  */
 @Component("userService")
 @scope("prototype")
-public class UserService {
+public class UserService implements InitializingBean {
 
     @Autowired
     private OrderService orderService;
 
-    public void test() {
-        System.out.println(orderService);
+    private String name;
+
+    public void setName(String name) {
+        this.name = name;
     }
 
+    public void test() {
+        System.out.println(orderService);
+        System.out.println(name);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("初始化");
+    }
 }

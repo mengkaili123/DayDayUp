@@ -5,6 +5,8 @@ import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,6 +20,7 @@ public class MiniApplicationContext {
 
     private ConcurrentHashMap<String, Object> singleObjects = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>();
+    private List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
     public MiniApplicationContext(Class configClass) {
         this.configClass = configClass;
@@ -29,7 +32,7 @@ public class MiniApplicationContext {
             String beanName = entry.getKey();
             BeanDefinition beanDefinition = entry.getValue();
             if (beanDefinition.getScope().equals("singleton")) {
-                Object bean = createBean(beanDefinition);
+                Object bean = createBean(beanName, beanDefinition);
                 singleObjects.put(beanName, bean);
             }
         }
@@ -37,7 +40,7 @@ public class MiniApplicationContext {
     }
 
     //创建Bean
-    public Object createBean(BeanDefinition beanDefinition) {
+    public Object createBean(String beanName, BeanDefinition beanDefinition) {
         Class clazz = beanDefinition.getClazz();
         try {
             Object instance = clazz.getDeclaredConstructor().newInstance();
@@ -52,14 +55,26 @@ public class MiniApplicationContext {
                 }
             }
 
+            // Aware回调
+            if (instance instanceof BeanNameAware) {
+                ((BeanNameAware)instance).setBeanName(beanName);
+            }
+
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+                instance = beanPostProcessor.postProcessBeforeInitialization(instance, beanName);
+            }
+
+            // 初始化
+            if (instance instanceof InitializingBean) {
+                ((InitializingBean)instance).afterPropertiesSet();
+            }
+
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+                instance = beanPostProcessor.postProcessAfterInitialization(instance, beanName);
+            }
+
             return instance;
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
@@ -89,6 +104,12 @@ public class MiniApplicationContext {
                         //表示当前这个类是一个bean
                         //解析类，判断当前bean是单例bean，还是prototype的bean
 
+                        //判断当前对象是否实现了接口
+                        if (BeanPostProcessor.class.isAssignableFrom(clazz)) {
+                            BeanPostProcessor instance = (BeanPostProcessor) clazz.getDeclaredConstructor().newInstance();
+                            beanPostProcessorList.add(instance);
+                        }
+
                         Component componentAnnotation = clazz.getDeclaredAnnotation(Component.class);
                         String beanName = componentAnnotation.value();
 
@@ -104,7 +125,7 @@ public class MiniApplicationContext {
 
                         beanDefinitionMap.put(beanName, beanDefinition);
                     }
-                } catch (ClassNotFoundException e) {
+                } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
             }
@@ -119,7 +140,7 @@ public class MiniApplicationContext {
                 return o;
             } else {
                 //创建bean对象
-                Object bean = createBean(beanDefinition);
+                Object bean = createBean(beanName, beanDefinition);
                 return bean;
             }
         } else {
